@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.34928.147
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ECATPlugin", "ECATPlugin\ECATPlugin.csproj", "{72ADE44B-EFB3-4ACC-922E-578DFFE180A5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{5DD24282-E68A-43AF-BFD8-9C9A60EAB57B}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\..\..\Arkalith\Walsh\walsh-logo-plugin.png = ..\..\..\..\..\Arkalith\Walsh\walsh-logo-plugin.png
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{72ADE44B-EFB3-4ACC-922E-578DFFE180A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72ADE44B-EFB3-4ACC-922E-578DFFE180A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72ADE44B-EFB3-4ACC-922E-578DFFE180A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72ADE44B-EFB3-4ACC-922E-578DFFE180A5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0E3D0976-27B2-4D2C-9F41-1964CB1E6D6A}
+	EndGlobalSection
+EndGlobal
