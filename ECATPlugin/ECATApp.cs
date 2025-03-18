@@ -40,8 +40,11 @@ namespace ECATPlugin
                     pushButton.ToolTip = "Launch the Walsh ECAT Tool"; // Add a tooltip for clarity
                 }
 
-                pushButton.LargeImage = new System.Windows.Media.Imaging.BitmapImage(new Uri(@"C:\Users\hummd\source\repos\ECATPlugin\ECATPlugin\bin\Debug\walsh_logo.png"));
-
+                // Replace with this (using a relative path is better)
+                string assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                string assemblyDirectory = System.IO.Path.GetDirectoryName(assemblyPath);
+                string logoPath = System.IO.Path.Combine(assemblyDirectory, "walsh_ecat_logo.png");
+                pushButton.LargeImage = new System.Windows.Media.Imaging.BitmapImage(new Uri(logoPath));
                 return Result.Succeeded;
             }
             catch (System.Exception ex)

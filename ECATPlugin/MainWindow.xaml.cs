@@ -10,6 +10,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Media;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace ECATPlugin
 {
@@ -41,11 +42,11 @@ namespace ECATPlugin
             this.ShowInTaskbar = true;
 
             InitializePopup();
-            
+            InitializeMaterialTables(); // Add this line to initialize material tables
+
             // Set both view models as resources
             this.Resources["MainViewModel"] = _viewModel;
 
-            
             // Set the main data context
             DataContext = _viewModel;
 
@@ -60,9 +61,6 @@ namespace ECATPlugin
 
             // Register the TextBox event handlers
             RegisterECTextBoxHandlers();
-            
-            // Update hierarchical data from the main view model
-
         }
 
         private void RegisterECTextBoxHandlers()
@@ -77,7 +75,7 @@ namespace ECATPlugin
                     textBox.PreviewMouseDown += EmbodiedCarbonTextBox_PreviewMouseDown;
                     textBox.TextChanged += EmbodiedCarbonTextBox_TextChanged;
                     textBox.PreviewTextInput += NumberOnly_PreviewTextInput;
-                    
+
                     // Remove LostFocus handler as we want the popup to stay open
                     // textBox.LostFocus += EmbodiedCarbonTextBox_LostFocus;
                 }
@@ -206,7 +204,7 @@ namespace ECATPlugin
                 {
                     bindingExpression.UpdateSource();
                 }
-                
+
                 // Small delay to ensure binding completes before closing popup
                 System.Windows.Threading.DispatcherTimer timer = new System.Windows.Threading.DispatcherTimer();
                 timer.Interval = TimeSpan.FromMilliseconds(100);
@@ -328,9 +326,6 @@ namespace ECATPlugin
 
                 // Update calculations
                 _viewModel.UpdateTotalCarbonEmbodiment();
-                
-                // Update hierarchical data
-
             }
         }
 
@@ -341,9 +336,6 @@ namespace ECATPlugin
             {
                 // Trigger property change notifications in the view model
                 _viewModel.UpdateTotalCarbonEmbodiment();
-                
-                // Update hierarchical data
-
             }
         }
 
@@ -353,21 +345,84 @@ namespace ECATPlugin
             {
                 // Get the material type from the tag
                 string materialType = comboBox.Tag as string;
-                
-                // Check if we're working with a hierarchical item
-                
-               
-                    // Trigger recalculation for traditional data model
-                    _viewModel.UpdateTotalCarbonEmbodiment();
-               
-                
-                // Update hierarchical data
-   
+
+                // Trigger recalculation for traditional data model
+                _viewModel.UpdateTotalCarbonEmbodiment();
             }
         }
-        
-        
 
+        // Add these methods to MainWindow.xaml.cs
+
+        // Initialize material tables
+        private void InitializeMaterialTables()
+        {
+            // Register event handlers for material-specific tables
+            RegisterMaterialTableEventHandlers();
+        }
+
+        private void RegisterMaterialTableEventHandlers()
+        {
+            // Find each DataGrid in the GroupBox headers for materials
+            var steelGrid = FindVisualChildren<DataGrid>(this)
+                .FirstOrDefault(grid => grid.Parent is GroupBox gb && gb.Header?.ToString() == "Steel Components");
+
+            var timberGrid = FindVisualChildren<DataGrid>(this)
+                .FirstOrDefault(grid => grid.Parent is GroupBox gb && gb.Header?.ToString() == "Timber Components");
+
+            var masonryGrid = FindVisualChildren<DataGrid>(this)
+                .FirstOrDefault(grid => grid.Parent is GroupBox gb && gb.Header?.ToString() == "Masonry Components");
+
+            // Add event handlers for DataGrids if found
+            if (steelGrid != null)
+            {
+                steelGrid.Loaded += (s, e) =>
+                {
+                    // Verify or update correct data source is used
+                    if (steelGrid.ItemsSource != _viewModel.SteelItemsView)
+                        steelGrid.ItemsSource = _viewModel.SteelItemsView;
+                };
+            }
+
+            if (timberGrid != null)
+            {
+                timberGrid.Loaded += (s, e) =>
+                {
+                    // Verify or update correct data source is used
+                    if (timberGrid.ItemsSource != _viewModel.TimberItemsView)
+                        timberGrid.ItemsSource = _viewModel.TimberItemsView;
+                };
+            }
+
+            if (masonryGrid != null)
+            {
+                masonryGrid.Loaded += (s, e) =>
+                {
+                    // Verify or update correct data source is used
+                    if (masonryGrid.ItemsSource != _viewModel.MasonryItemsView)
+                        masonryGrid.ItemsSource = _viewModel.MasonryItemsView;
+                };
+            }
+        }
+
+        // Helper method to find visual children of a specific type
+        private static IEnumerable<T> FindVisualChildren<T>(DependencyObject parent) where T : DependencyObject
+        {
+            if (parent == null) yield break;
+
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+
+                if (child != null)
+                {
+                    if (child is T childOfType)
+                        yield return childOfType;
+
+                    foreach (var grandChild in FindVisualChildren<T>(child))
+                        yield return grandChild;
+                }
+            }
+        }
 
     }
 }

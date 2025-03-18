@@ -9,6 +9,7 @@ using System.Linq;
 using System.Windows.Media;
 using System.Windows.Input;
 using System.Xml.Linq;
+using System.Windows;
 
 namespace ECATPlugin
 {
@@ -35,9 +36,20 @@ namespace ECATPlugin
 
         private void ShowOtherRatings()
         {
-            // Create an instance of RatingPopup with the CarbonRating value
-            RatingPopup ratingPopup = new RatingPopup(CarbonRating, this);
-            ratingPopup.ShowDialog(); // Show the popup as a dialog
+            try
+            {
+                // Create an instance of RatingPopup with the CarbonRating value
+                RatingPopup ratingPopup = new RatingPopup(CarbonRating, this);
+
+                // Show the window as non-modal
+                ratingPopup.Show();
+            }
+            catch (Exception ex)
+            {
+                // Handle any exceptions to prevent Revit from crashing
+                System.Diagnostics.Debug.WriteLine($"Error showing ratings: {ex.Message}");
+                MessageBox.Show($"Unable to show ratings: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         // Define structure to hold item properties
@@ -117,6 +129,7 @@ namespace ECATPlugin
                 {
                     _ec = value;
                     OnPropertyChanged(nameof(EC));
+                    OnPropertyChanged(nameof(ConcreteCarbon));
                     OnPropertyChanged(nameof(SubTotalCarbon));
                 }
             }
@@ -129,50 +142,136 @@ namespace ECATPlugin
                 {
                     _rebarDensity = value;
                     OnPropertyChanged(nameof(RebarDensity));
+                    OnPropertyChanged(nameof(ConcreteCarbon));
                     OnPropertyChanged(nameof(SubTotalCarbon));
                 }
             }
 
-            // Steel specific properties
-            public string SteelType { get; set; } = "Open Section"; // Open Section, Closed Section, Plates
-            public string SteelSource { get; set; } = "UK"; // UK, Global, UK (Reused)
+            private string _steelType = "Open Section"; // Open Section, Closed Section, Plates
+            public string SteelType
+            {
+                get => _steelType;
+                set
+                {
+                    if (_steelType != value)
+                    {
+                        _steelType = value;
+                        OnPropertyChanged(nameof(SteelType));
+                        OnPropertyChanged(nameof(SteelCarbon));
+                        OnPropertyChanged(nameof(SubTotalCarbon));
+                    }
+                }
+            }
+
+            private string _steelSource = "UK"; // UK, Global, UK (Reused)
+            public string SteelSource
+            {
+                get => _steelSource;
+                set
+                {
+                    if (_steelSource != value)
+                    {
+                        _steelSource = value;
+                        OnPropertyChanged(nameof(SteelSource));
+                        OnPropertyChanged(nameof(SteelCarbon));
+                        OnPropertyChanged(nameof(SubTotalCarbon));
+                    }
+                }
+            }
 
             // Timber specific properties
-            public string TimberType { get; set; } = "Softwood"; // Softwood, Glulam, LVL, CLT
-            public string TimberSource { get; set; } = "Global"; // UK & EU, Global
+            private string _timberType = "Softwood"; // Softwood, Glulam, LVL, CLT
+            public string TimberType
+            {
+                get => _timberType;
+                set
+                {
+                    if (_timberType != value)
+                    {
+                        _timberType = value;
+                        OnPropertyChanged(nameof(TimberType));
+                        OnPropertyChanged(nameof(TimberCarbon));
+                        OnPropertyChanged(nameof(SubTotalCarbon));
+                    }
+                }
+            }
+
+            private string _timberSource = "Global"; // UK & EU, Global
+            public string TimberSource
+            {
+                get => _timberSource;
+                set
+                {
+                    if (_timberSource != value)
+                    {
+                        _timberSource = value;
+                        OnPropertyChanged(nameof(TimberSource));
+                        OnPropertyChanged(nameof(TimberCarbon));
+                        OnPropertyChanged(nameof(SubTotalCarbon));
+                    }
+                }
+            }
 
             // Masonry specific properties
-            public string MasonryType { get; set; } = "Blockwork"; // Blockwork, Brickwork
+            private string _masonryType = "Blockwork"; // Blockwork, Brickwork
+            public string MasonryType
+            {
+                get => _masonryType;
+                set
+                {
+                    if (_masonryType != value)
+                    {
+                        _masonryType = value;
+                        OnPropertyChanged(nameof(MasonryType));
+                        OnPropertyChanged(nameof(MasonryCarbon));
+                        OnPropertyChanged(nameof(SubTotalCarbon));
+                    }
+                }
+            }
+
+    
 
             // Module properties for all materials
-            public string Module { get; set; } = "A1-A3"; // A1-A3, A4, A5
+            private string _module = "A1-A3"; // A1-A3, A4, A5
+            public string Module
+            {
+                get => _module;
+                set
+                {
+                    if (_module != value)
+                    {
+                        _module = value;
+                        OnPropertyChanged(nameof(Module));
+                        // Notify all carbon properties that might be affected
+                        OnPropertyChanged(nameof(SteelCarbon));
+                        OnPropertyChanged(nameof(TimberCarbon));
+                        OnPropertyChanged(nameof(MasonryCarbon));
+                        OnPropertyChanged(nameof(SubTotalCarbon));
+                    }
+                }
+            }
 
-            public double SubTotalCarbon => CalculateSubTotalCarbon();
+            public double ConcreteCarbon => CalculateConcreteCarbon();
+            public double SteelCarbon => CalculateSteelCarbon();
+            public double TimberCarbon => CalculateTimberCarbon();
+            public double MasonryCarbon => CalculateMasonryCarbon();
+
+            // Modify this property to use the individual calculations
+            public double SubTotalCarbon => ConcreteCarbon + SteelCarbon + TimberCarbon + MasonryCarbon;
 
             public event PropertyChangedEventHandler PropertyChanged;
             protected void OnPropertyChanged(string name) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
-            private double CalculateSubTotalCarbon()
+            // Add this new method for concrete carbon calculation
+            private double CalculateConcreteCarbon()
             {
-                // Base calculation for concrete
-                double concreteCarbon = (ConcreteVolume * EC + ConcreteVolume * RebarDensity) * 0.785;
-
-                // Calculate for steel based on type and source
-                double steelCarbon = CalculateSteelCarbon();
-
-                // Calculate for timber based on type and source
-                double timberCarbon = CalculateTimberCarbon();
-
-                // Calculate for masonry based on type
-                double masonryCarbon = CalculateMasonryCarbon();
-
-                return concreteCarbon + steelCarbon + timberCarbon + masonryCarbon;
+                return (ConcreteVolume * EC + ConcreteVolume * RebarDensity) * 0.785;
             }
 
+            // Keep these methods as they are
             private double CalculateSteelCarbon()
             {
                 if (SteelVolume <= 0) return 0;
-
                 double ecFactor = GetSteelECFactor();
                 return SteelVolume * ecFactor * 7850; // Density of steel = 7850 kg/m³
             }
@@ -196,17 +295,14 @@ namespace ECATPlugin
                     if (SteelSource == "UK") return 2.460;
                     if (SteelSource == "Global") return 2.460;
                 }
-
                 return 1.740; // Default to UK Open Section
             }
 
             private double CalculateTimberCarbon()
             {
                 if (TimberVolume <= 0) return 0;
-
                 double ecFactor = GetTimberECFactor();
                 double density = GetTimberDensity();
-
                 return TimberVolume * ecFactor * density;
             }
 
@@ -230,7 +326,6 @@ namespace ECATPlugin
                 {
                     return 0.420;
                 }
-
                 return 0.263; // Default to Softwood Global
             }
 
@@ -241,17 +336,14 @@ namespace ECATPlugin
                 if (TimberType == "Glulam") return 470;
                 if (TimberType == "LVL") return 510;
                 if (TimberType == "CLT") return 492;
-
                 return 380; // Default to Softwood
             }
 
             private double CalculateMasonryCarbon()
             {
                 if (MasonryVolume <= 0) return 0;
-
                 double ecFactor = 0;
                 double density = 0;
-
                 if (MasonryType == "Blockwork")
                 {
                     ecFactor = 0.093;
@@ -262,8 +354,18 @@ namespace ECATPlugin
                     ecFactor = 0.213;
                     density = 1910;
                 }
-
                 return MasonryVolume * ecFactor * density;
+            }
+        }
+
+        private string _phase;
+        public string Phase
+        {
+            get => _phase;
+            set
+            {
+                _phase = value;
+                OnPropertyChanged(nameof(Phase));
             }
         }
 
@@ -305,12 +407,6 @@ namespace ECATPlugin
             }
         }
 
-        // Method to update ItemsView when the Items dictionary changes
-        private void UpdateItemsView()
-        {
-            _itemsView = null;
-            OnPropertyChanged(nameof(ItemsView));
-        }
 
         // Initialize dictionary with default values
         private void InitializeItems()
@@ -620,8 +716,6 @@ namespace ECATPlugin
                 System.Diagnostics.Debug.WriteLine($"- {mat}");
             }
 
-
-            // The volume finding code is buggy 
             // Find the closest matching materials
             ElementId concreteMatId = FindBestMaterialMatch(allMaterials, "Concrete", "WAL_Concrete_RC");
             ElementId steelMatId = FindBestMaterialMatch(allMaterials, "Steel", "WAL_Steel", "Metal");
@@ -666,25 +760,33 @@ namespace ECATPlugin
                     if (volume <= 0)
                         continue;
 
+                    // Concrete is applicable for all structural elements
                     if (materialId.Equals(concreteMatId))
                     {
                         if (!concreteVolumes.ContainsKey(elementType))
                             concreteVolumes[elementType] = 0;
                         concreteVolumes[elementType] += volume;
                     }
-                    else if (materialId.Equals(steelMatId))
+
+                    // Steel is only for beams, columns, floors, foundations, and pilings
+                    else if (materialId.Equals(steelMatId) && IsItemValidForMaterial(elementType, "Steel"))
                     {
                         if (!steelVolumes.ContainsKey(elementType))
                             steelVolumes[elementType] = 0;
                         steelVolumes[elementType] += volume;
                     }
-                    else if (materialId.Equals(timberMatId))
+
+                    // Timber is only for beams, columns, walls, and floors
+                    else if (materialId.Equals(timberMatId) && IsItemValidForMaterial(elementType, "Timber"))
                     {
                         if (!timberVolumes.ContainsKey(elementType))
                             timberVolumes[elementType] = 0;
                         timberVolumes[elementType] += volume;
                     }
-                    else if (materialId.Equals(blockMatId) || materialId.Equals(brickMatId))
+
+                    // Masonry is only for walls
+                    else if ((materialId.Equals(blockMatId) || materialId.Equals(brickMatId)) &&
+                             IsItemValidForMaterial(elementType, "Masonry"))
                     {
                         if (!masonryVolumes.ContainsKey(elementType))
                             masonryVolumes[elementType] = 0;
@@ -697,9 +799,24 @@ namespace ECATPlugin
             foreach (var key in _items.Keys)
             {
                 _items[key].ConcreteVolume = concreteVolumes.ContainsKey(key) ? concreteVolumes[key] / 35.315 : 0;
-                _items[key].SteelVolume = steelVolumes.ContainsKey(key) ? steelVolumes[key] / 35.315 : 0;
-                _items[key].TimberVolume = timberVolumes.ContainsKey(key) ? timberVolumes[key] / 35.315 : 0;
-                _items[key].MasonryVolume = masonryVolumes.ContainsKey(key) ? masonryVolumes[key] / 35.315 : 0;
+
+                // Only set steel volumes for compatible component types
+                if (IsItemValidForMaterial(key, "Steel"))
+                    _items[key].SteelVolume = steelVolumes.ContainsKey(key) ? steelVolumes[key] / 35.315 : 0;
+                else
+                    _items[key].SteelVolume = 0;
+
+                // Only set timber volumes for compatible component types
+                if (IsItemValidForMaterial(key, "Timber"))
+                    _items[key].TimberVolume = timberVolumes.ContainsKey(key) ? timberVolumes[key] / 35.315 : 0;
+                else
+                    _items[key].TimberVolume = 0;
+
+                // Only set masonry volumes for compatible component types
+                if (IsItemValidForMaterial(key, "Masonry"))
+                    _items[key].MasonryVolume = masonryVolumes.ContainsKey(key) ? masonryVolumes[key] / 35.315 : 0;
+                else
+                    _items[key].MasonryVolume = 0;
             }
 
             UpdateTotalCarbonEmbodiment();
@@ -783,7 +900,8 @@ namespace ECATPlugin
 
                 // Check for piling (may need additional checks based on family/type name)
                 var typeName = element.Name;
-                if (typeName.Contains("Pile") || typeName.Contains("Piling"))
+                if (typeName.Contains("Pile") || typeName.Contains("Piling")) 
+                    
                     return "Piling";
             }
             else if (element is Wall wall)
@@ -1030,9 +1148,13 @@ namespace ECATPlugin
         }
 
         // Update total carbon embodiment
+        // Update the TotalCarbonEmbodiment calculation in MainViewModel.cs
         public void UpdateTotalCarbonEmbodiment()
         {
-            TotalCarbonEmbodiment = _items.Values.Sum(item => item.SubTotalCarbon);
+            // Calculate the sum of the subtotal carbon values for all materials across all items
+            TotalCarbonEmbodiment = _items.Values.Sum(item => item.SubTotalCarbon) / 1000; // Convert from kg to tonnes
+
+            // Update the carbon rating based on the selected GIA
             UpdateCarbonRating();
         }
 
@@ -1042,13 +1164,16 @@ namespace ECATPlugin
             double selectedGIA = IsInputGIASelected ? GIA : GIACalculated;
             if (selectedGIA > 0)
             {
-                CarbonRating = TotalCarbonEmbodiment / selectedGIA;
+                // Calculate kgCO2e/m² by converting total carbon back to kg and dividing by GIA
+                CarbonRating = (TotalCarbonEmbodiment * 1000) / selectedGIA;
             }
             else
             {
                 CarbonRating = 0;
             }
         }
+
+        
 
         // Method to get project name
         private void GetProjectName()
@@ -1069,48 +1194,125 @@ namespace ECATPlugin
             }
         }
 
+        // Update these methods in MainViewModel.cs
+
         private string GetDataFilePath()
         {
             string directory = System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData);
-            string filePath = System.IO.Path.Combine(directory, "ECATPluginData.xml");
+            string projectSubfolder = "ECATPluginData";
+
+            // Create the base directory if it doesn't exist
+            string fullDirectory = System.IO.Path.Combine(directory, projectSubfolder);
+            if (!System.IO.Directory.Exists(fullDirectory))
+            {
+                System.IO.Directory.CreateDirectory(fullDirectory);
+            }
+
+            // Get a unique identifier for the current project
+            string projectIdentifier = GetProjectIdentifier();
+
+            // Create a filename using the project identifier
+            string fileName = $"ECAT_{projectIdentifier}.xml";
+
+            string filePath = System.IO.Path.Combine(fullDirectory, fileName);
             return filePath;
+        }
+
+        // Helper method to get a unique identifier for the current project
+        private string GetProjectIdentifier()
+        {
+            // First try to use project number and cleaned project name
+            if (!string.IsNullOrEmpty(ProjectNumber) && !string.IsNullOrEmpty(ProjectName))
+            {
+                // Create a sanitized identifier
+                string identifier = $"{ProjectNumber}_{CleanFileName(ProjectName)}";
+                return identifier;
+            }
+
+            // If project number/name aren't available or are empty, use the document's unique ID
+            if (_document != null)
+            {
+                // Use the document's UniqueId as a fallback
+                string docId = _document.ProjectInformation?.UniqueId ?? _document.Title;
+                if (!string.IsNullOrEmpty(docId))
+                {
+                    return CleanFileName(docId);
+                }
+            }
+
+            // Last resort: use the document title or a timestamp if nothing else is available
+            return CleanFileName(_document?.Title ?? DateTime.Now.ToString("yyyyMMdd_HHmmss"));
+        }
+
+        // Helper method to clean a string for use in a filename
+        private string CleanFileName(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return "Unknown";
+
+            // Replace invalid filename characters with underscores
+            char[] invalidChars = System.IO.Path.GetInvalidFileNameChars();
+            string result = new string(input.Select(c => invalidChars.Contains(c) ? '_' : c).ToArray());
+
+            // Ensure it's not too long
+            if (result.Length > 50)
+                result = result.Substring(0, 50);
+
+            return result;
         }
 
         public void SaveData()
         {
-            var dataFilePath = GetDataFilePath();
-            XDocument doc = new XDocument(
-                new XElement("ECATPluginData",
-                    new XElement("ProjectName", ProjectName),
-                    new XElement("ProjectNumber", ProjectNumber),
-                    new XElement("GIA", GIA),
-                    new XElement("GIACalculated", GIACalculated),
-                    new XElement("IsInputGIASelected", IsInputGIASelected),
-                    new XElement("IsCalculatedGIASelected", IsCalculatedGIASelected),
-                    new XElement("Items",
-                        _items.Select(item =>
-                            new XElement("Item",
-                                new XAttribute("Name", item.Key),
-                                new XElement("EC", item.Value.EC),
-                                new XElement("RebarDensity", item.Value.RebarDensity),
-                                new XElement("SteelType", item.Value.SteelType),
-                                new XElement("SteelSource", item.Value.SteelSource),
-                                new XElement("TimberType", item.Value.TimberType),
-                                new XElement("TimberSource", item.Value.TimberSource),
-                                new XElement("MasonryType", item.Value.MasonryType),
-                                new XElement("Module", item.Value.Module)
-                            )
-                        )
-                    )
-                )
-            );
+            try
+            {
+                var dataFilePath = GetDataFilePath();
 
-            doc.Save(dataFilePath);
+                XDocument doc = new XDocument(
+                    new XElement("ECATPluginData",
+                        new XElement("ProjectName", ProjectName),
+                        new XElement("ProjectNumber", ProjectNumber),
+                        new XElement("Phase", Phase),
+                        new XElement("GIA", GIA),
+                        new XElement("GIACalculated", GIACalculated),
+                        new XElement("IsInputGIASelected", IsInputGIASelected),
+                        new XElement("IsCalculatedGIASelected", IsCalculatedGIASelected),
+                        new XElement("Items",
+                            _items.Select(item =>
+                                new XElement("Item",
+                                    new XAttribute("Name", item.Key),
+                                    new XElement("EC", item.Value.EC),
+                                    new XElement("RebarDensity", item.Value.RebarDensity),
+                                    new XElement("ConcreteVolume", item.Value.ConcreteVolume),
+                                    new XElement("SteelVolume", item.Value.SteelVolume),
+                                    new XElement("TimberVolume", item.Value.TimberVolume),
+                                    new XElement("MasonryVolume", item.Value.MasonryVolume),
+                                    new XElement("SteelType", item.Value.SteelType),
+                                    new XElement("SteelSource", item.Value.SteelSource),
+                                    new XElement("TimberType", item.Value.TimberType),
+                                    new XElement("TimberSource", item.Value.TimberSource),
+                                    new XElement("MasonryType", item.Value.MasonryType),
+                                    new XElement("Module", item.Value.Module)
+                                )
+                            )
+                        ),
+                        new XElement("SavedDate", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
+                    )
+                );
+
+                doc.Save(dataFilePath);
+                System.Diagnostics.Debug.WriteLine($"Data saved to {dataFilePath}");
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't crash
+                System.Diagnostics.Debug.WriteLine($"Error saving data: {ex.Message}");
+            }
         }
 
         public void LoadData()
         {
             var dataFilePath = GetDataFilePath();
+
             if (System.IO.File.Exists(dataFilePath))
             {
                 try
@@ -1121,6 +1323,9 @@ namespace ECATPlugin
                     // Load project details
                     ProjectName = root.Element("ProjectName")?.Value ?? ProjectName;
                     ProjectNumber = root.Element("ProjectNumber")?.Value ?? ProjectNumber;
+
+                    if (root.Element("Phase") != null)
+                        Phase = root.Element("Phase")?.Value ?? "";
 
                     // Load GIA settings
                     if (root.Element("GIA") != null)
@@ -1144,50 +1349,73 @@ namespace ECATPlugin
                     IsCalculatedGIASelected = isCalculatedGIASelected;
 
                     // Load item data
-                    foreach (var itemElement in root.Element("Items").Elements("Item"))
+                    var itemsElement = root.Element("Items");
+                    if (itemsElement != null)
                     {
-                        string name = itemElement.Attribute("Name")?.Value;
-                        if (_items.ContainsKey(name))
+                        foreach (var itemElement in itemsElement.Elements("Item"))
                         {
-                            var itemData = _items[name];
+                            string name = itemElement.Attribute("Name")?.Value;
+                            if (_items.ContainsKey(name))
+                            {
+                                var itemData = _items[name];
 
-                            // Load carbon values
-                            if (itemElement.Element("EC") != null)
-                                itemData.EC = double.Parse(itemElement.Element("EC").Value);
+                                // Load carbon values
+                                if (itemElement.Element("EC") != null)
+                                    itemData.EC = double.Parse(itemElement.Element("EC").Value);
 
-                            if (itemElement.Element("RebarDensity") != null)
-                                itemData.RebarDensity = double.Parse(itemElement.Element("RebarDensity").Value);
+                                if (itemElement.Element("RebarDensity") != null)
+                                    itemData.RebarDensity = double.Parse(itemElement.Element("RebarDensity").Value);
 
-                            // Load material type properties
-                            if (itemElement.Element("SteelType") != null)
-                                itemData.SteelType = itemElement.Element("SteelType").Value;
+                                // Load volume values - new additions
+                                if (itemElement.Element("ConcreteVolume") != null)
+                                    itemData.ConcreteVolume = double.Parse(itemElement.Element("ConcreteVolume").Value);
 
-                            if (itemElement.Element("SteelSource") != null)
-                                itemData.SteelSource = itemElement.Element("SteelSource").Value;
+                                if (itemElement.Element("SteelVolume") != null)
+                                    itemData.SteelVolume = double.Parse(itemElement.Element("SteelVolume").Value);
 
-                            if (itemElement.Element("TimberType") != null)
-                                itemData.TimberType = itemElement.Element("TimberType").Value;
+                                if (itemElement.Element("TimberVolume") != null)
+                                    itemData.TimberVolume = double.Parse(itemElement.Element("TimberVolume").Value);
 
-                            if (itemElement.Element("TimberSource") != null)
-                                itemData.TimberSource = itemElement.Element("TimberSource").Value;
+                                if (itemElement.Element("MasonryVolume") != null)
+                                    itemData.MasonryVolume = double.Parse(itemElement.Element("MasonryVolume").Value);
 
-                            if (itemElement.Element("MasonryType") != null)
-                                itemData.MasonryType = itemElement.Element("MasonryType").Value;
+                                // Load material type properties
+                                if (itemElement.Element("SteelType") != null)
+                                    itemData.SteelType = itemElement.Element("SteelType").Value;
 
-                            if (itemElement.Element("Module") != null)
-                                itemData.Module = itemElement.Element("Module").Value;
+                                if (itemElement.Element("SteelSource") != null)
+                                    itemData.SteelSource = itemElement.Element("SteelSource").Value;
+
+                                if (itemElement.Element("TimberType") != null)
+                                    itemData.TimberType = itemElement.Element("TimberType").Value;
+
+                                if (itemElement.Element("TimberSource") != null)
+                                    itemData.TimberSource = itemElement.Element("TimberSource").Value;
+
+                                if (itemElement.Element("MasonryType") != null)
+                                    itemData.MasonryType = itemElement.Element("MasonryType").Value;
+
+                                if (itemElement.Element("Module") != null)
+                                    itemData.Module = itemElement.Element("Module").Value;
+                            }
                         }
                     }
 
                     // Update calculations after loading data
                     UpdateTotalCarbonEmbodiment();
                     UpdateItemsView(); // Update ItemsView after loading data
+
+                    System.Diagnostics.Debug.WriteLine($"Data loaded from {dataFilePath}");
                 }
                 catch (Exception ex)
                 {
                     // Log error but continue - don't crash on corrupted save file
                     System.Diagnostics.Debug.WriteLine($"Error loading saved data: {ex.Message}");
                 }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"No saved data found at {dataFilePath}");
             }
         }
 
@@ -1208,7 +1436,7 @@ namespace ECATPlugin
             return new List<string>();
         }
 
-        
+
 
         // Get available timber types for UI binding
         public List<string> AvailableTimberTypes
@@ -1264,6 +1492,136 @@ namespace ECATPlugin
                 return sources.Distinct().ToList();
             }
         }
+
+        // New properties to expose filtered collections
+        private ObservableCollection<KeyValuePair<string, ItemData>> _steelItemsView;
+        public ObservableCollection<KeyValuePair<string, ItemData>> SteelItemsView
+        {
+            get
+            {
+                if (_steelItemsView == null)
+                {
+                    _steelItemsView = new ObservableCollection<KeyValuePair<string, ItemData>>(
+                        _items.Where(item =>
+                            item.Key == "Beam" ||
+                            item.Key == "Column" ||
+                            item.Key == "Floor" ||
+                            item.Key == "Foundation" ||
+                            item.Key == "Piling")
+                    );
+                }
+                return _steelItemsView;
+            }
+        }
+
+        private ObservableCollection<KeyValuePair<string, ItemData>> _timberItemsView;
+        public ObservableCollection<KeyValuePair<string, ItemData>> TimberItemsView
+        {
+            get
+            {
+                if (_timberItemsView == null)
+                {
+                    _timberItemsView = new ObservableCollection<KeyValuePair<string, ItemData>>(
+                        _items.Where(item =>
+                            item.Key == "Beam" ||
+                            item.Key == "Column" ||
+                            item.Key == "Wall" ||
+                            item.Key == "Floor")
+                    );
+                }
+                return _timberItemsView;
+            }
+        }
+
+        private ObservableCollection<KeyValuePair<string, ItemData>> _masonryItemsView;
+        public ObservableCollection<KeyValuePair<string, ItemData>> MasonryItemsView
+        {
+            get
+            {
+                if (_masonryItemsView == null)
+                {
+                    _masonryItemsView = new ObservableCollection<KeyValuePair<string, ItemData>>(
+                        _items.Where(item => item.Key == "Wall")
+                    );
+                }
+                return _masonryItemsView;
+            }
+        }
+
+        // Function to update all filtered views when the main collection changes
+        private void UpdateFilteredItemsViews()
+        {
+            _steelItemsView = null;
+            OnPropertyChanged(nameof(SteelItemsView));
+
+            _timberItemsView = null;
+            OnPropertyChanged(nameof(TimberItemsView));
+
+            _masonryItemsView = null;
+            OnPropertyChanged(nameof(MasonryItemsView));
+        }
+
+        // Modify the existing UpdateItemsView method to also update filtered views
+        private void UpdateItemsView()
+        {
+            _itemsView = null;
+            OnPropertyChanged(nameof(ItemsView));
+
+            // Also update the filtered views
+            UpdateFilteredItemsViews();
+        }
+
+        // Helper method to check if an item should have non-zero volumes based on material type
+        public bool ShouldShowItemForMaterial(string itemKey, string materialType)
+        {
+            switch (materialType)
+            {
+                case "Steel":
+                    return itemKey == "Beam" ||
+                           itemKey == "Column" ||
+                           itemKey == "Floor" ||
+                           itemKey == "Foundation" ||
+                           itemKey == "Piling";
+                case "Timber":
+                    return itemKey == "Beam" ||
+                           itemKey == "Column" ||
+                           itemKey == "Wall" ||
+                           itemKey == "Floor";
+                case "Masonry":
+                    return itemKey == "Wall";
+                default:
+                    return true;
+            }
+        }
+
+        // Filter an item's volume based on material compatibility
+        public bool IsItemValidForMaterial(string itemKey, string materialType)
+        {
+            bool isValid = ShouldShowItemForMaterial(itemKey, materialType);
+
+            // Ensure volumes are zero for incompatible items
+            if (!isValid && _items.ContainsKey(itemKey))
+            {
+                switch (materialType)
+                {
+                    case "Steel":
+                        if (_items[itemKey].SteelVolume > 0)
+                            _items[itemKey].SteelVolume = 0;
+                        break;
+                    case "Timber":
+                        if (_items[itemKey].TimberVolume > 0)
+                            _items[itemKey].TimberVolume = 0;
+                        break;
+                    case "Masonry":
+                        if (_items[itemKey].MasonryVolume > 0)
+                            _items[itemKey].MasonryVolume = 0;
+                        break;
+                }
+            }
+
+            return isValid;
+        }
+    
 
     }
 }

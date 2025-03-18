@@ -53,8 +53,11 @@ namespace ECATPlugin
                 SelectionMode = DataGridSelectionMode.Single,
                 SelectionUnit = DataGridSelectionUnit.Cell,
                 CanUserSortColumns = false // Disable sorting
+
+
             };
 
+            
             // Add columns to the DataGrid with correct DataGridLengthUnitType
             _valueDataGrid.Columns.Add(new DataGridTextColumn
             {
@@ -96,20 +99,36 @@ namespace ECATPlugin
                 CanUserSort = false // Disable sorting for this column
             });
 
-            // Style the cells to make it clear they are selectable
-            Style cellStyle = new Style(typeof(DataGridCell));
-            cellStyle.Setters.Add(new Setter(DataGridCell.BackgroundProperty, Brushes.White));
-            cellStyle.Setters.Add(new Setter(DataGridCell.BorderBrushProperty, Brushes.LightGray));
-            cellStyle.Setters.Add(new Setter(DataGridCell.BorderThicknessProperty, new Thickness(1)));
-            cellStyle.Setters.Add(new Setter(DataGridCell.PaddingProperty, new Thickness(5)));
-            cellStyle.Setters.Add(new Setter(DataGridCell.CursorProperty, Cursors.Hand));
+            // Create different styles for the concrete type column versus the value columns
+            Style concreteTypeColumnStyle = new Style(typeof(DataGridCell));
+            concreteTypeColumnStyle.Setters.Add(new Setter(DataGridCell.BackgroundProperty, Brushes.LightGray));
+            concreteTypeColumnStyle.Setters.Add(new Setter(DataGridCell.ForegroundProperty, Brushes.Black));
+            concreteTypeColumnStyle.Setters.Add(new Setter(DataGridCell.FontWeightProperty, FontWeights.Bold));
+            concreteTypeColumnStyle.Setters.Add(new Setter(DataGridCell.BorderBrushProperty, Brushes.Gray));
+            concreteTypeColumnStyle.Setters.Add(new Setter(DataGridCell.BorderThicknessProperty, new Thickness(1)));
+            concreteTypeColumnStyle.Setters.Add(new Setter(DataGridCell.PaddingProperty, new Thickness(5)));
+            concreteTypeColumnStyle.Setters.Add(new Setter(DataGridCell.CursorProperty, Cursors.Arrow)); // Regular arrow cursor instead of hand
 
-            // Add hover effect
+            // Style the cells to make it clear they are selectable
+            Style valueColumnStyle = new Style(typeof(DataGridCell));
+            valueColumnStyle.Setters.Add(new Setter(DataGridCell.BackgroundProperty, Brushes.White));
+            valueColumnStyle.Setters.Add(new Setter(DataGridCell.BorderBrushProperty, Brushes.LightGray));
+            valueColumnStyle.Setters.Add(new Setter(DataGridCell.BorderThicknessProperty, new Thickness(1)));
+            valueColumnStyle.Setters.Add(new Setter(DataGridCell.PaddingProperty, new Thickness(5)));
+            valueColumnStyle.Setters.Add(new Setter(DataGridCell.CursorProperty, Cursors.Hand)); // Hand cursor to indicate clickable
+
+            // Add hover effect for value columns only
             Trigger mouseOverTrigger = new Trigger { Property = DataGridCell.IsMouseOverProperty, Value = true };
             mouseOverTrigger.Setters.Add(new Setter(DataGridCell.BackgroundProperty, Brushes.LightBlue));
-            cellStyle.Triggers.Add(mouseOverTrigger);
+            valueColumnStyle.Triggers.Add(mouseOverTrigger);
 
-            _valueDataGrid.CellStyle = cellStyle;
+            // Apply column-specific styles
+            _valueDataGrid.Columns[0].CellStyle = concreteTypeColumnStyle; // Concrete Type column
+            _valueDataGrid.Columns[1].CellStyle = valueColumnStyle; // 0% column
+            _valueDataGrid.Columns[2].CellStyle = valueColumnStyle; // 25% column  
+            _valueDataGrid.Columns[3].CellStyle = valueColumnStyle; // 50% column
+            _valueDataGrid.Columns[4].CellStyle = valueColumnStyle; // 75% column
+
 
             // Add event handler for DataGrid
             _valueDataGrid.MouseLeftButtonUp += ValueDataGrid_MouseLeftButtonUp;
@@ -185,7 +204,8 @@ namespace ECATPlugin
             string headerName = cellInfo.Column.Header.ToString();
             ConcreteData item = cellInfo.Item as ConcreteData;
 
-            if (item != null)
+            // Only allow selecting cells from percentage columns, not from the concrete type column
+            if (item != null && headerName != "Concrete Type")
             {
                 string value = "";
 
@@ -197,14 +217,13 @@ namespace ECATPlugin
                     value = item.FiftyPercent;
                 else if (headerName == "75%")
                     value = item.SeventyFivePercent;
-                else if (headerName == "Concrete Type")
-                    return; // Don't select the concrete type column
 
                 if (!string.IsNullOrEmpty(value))
                 {
                     ValueSelected?.Invoke(this, value);
                 }
             }
+            // If the concrete type column was clicked, don't do anything (don't trigger ValueSelected)
         }
 
         private DataGridCellInfo GetCellUnderMouse(Point mousePosition)
@@ -223,6 +242,10 @@ namespace ECATPlugin
             // If we found a cell
             if (element is DataGridCell cell)
             {
+                // Skip if this is the concrete type column (column index 0)
+                if (cell.Column != null && cell.Column.DisplayIndex == 0)
+                    return new DataGridCellInfo();
+
                 // Find the row that contains this cell
                 DataGridRow row = FindVisualParent<DataGridRow>(cell);
                 if (row != null)
@@ -231,7 +254,7 @@ namespace ECATPlugin
                     return new DataGridCellInfo(row.Item, _valueDataGrid.Columns[columnIndex]);
                 }
             }
-            // If we only found a row, get the cell under the mouse point
+            // If we only found a row, get the cell based on the X position
             else if (element is DataGridRow row)
             {
                 // Get the cell based on the X position
@@ -240,6 +263,11 @@ namespace ECATPlugin
                 {
                     var column = _valueDataGrid.Columns[i];
                     accumulatedWidth += column.ActualWidth;
+
+                    // Skip the concrete type column (column index 0)
+                    if (i == 0)
+                        continue;
+
                     if (mousePosition.X < accumulatedWidth)
                     {
                         return new DataGridCellInfo(row.Item, column);
@@ -276,4 +304,6 @@ namespace ECATPlugin
         public string FiftyPercent { get; set; }
         public string SeventyFivePercent { get; set; }
     }
+
+
 }

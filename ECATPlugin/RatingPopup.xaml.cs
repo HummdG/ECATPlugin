@@ -45,12 +45,22 @@ namespace ECATPlugin
             }
         }
         private MainViewModel _viewModel;
+
         public RatingPopup(double carbonRating, MainViewModel viewModel)
         {
             InitializeComponent();
             DataContext = this;
             CarbonRating = carbonRating;
             _viewModel = viewModel;
+
+            // Configure window to be non-modal but without setting the Owner
+            // Remove this line: this.Owner = Application.Current.MainWindow; 
+            this.ShowInTaskbar = true; // Show in taskbar
+            this.Topmost = false; // Don't set as topmost to allow interaction with other windows
+            this.WindowStartupLocation = WindowStartupLocation.CenterScreen; // Center on screen
+
+            // Add window title
+            this.Title = "Carbon Rating Standards Comparison";
         }
 
         private void UpdateArrowPosition(RatingType ratingType)
@@ -188,6 +198,11 @@ namespace ECATPlugin
             {
                 MessageBox.Show($"Error capturing screenshot: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
         }
     }
 }
