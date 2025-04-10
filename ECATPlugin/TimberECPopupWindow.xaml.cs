@@ -1,25 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Windows;
+﻿using System.Collections.Generic;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media.Effects;
 using System.Windows.Media;
+using System.Windows;
+using System;
 
 namespace ECATPlugin
 {
-    public partial class PopupWindow : UserControl
+    public partial class TimberECPopupWindow : UserControl
     {
         public event EventHandler<string> ValueSelected;
         private DataGrid _valueDataGrid;
+        private string _timberType;
 
-        public PopupWindow()
+        public TimberECPopupWindow(string timberType)
         {
+            _timberType = timberType;
             InitializeComponent();
+            SetupUI();
+        }
 
+        private void SetupUI()
+        {
             // Set fixed size for popup
             this.Width = 500;
-            this.Height = 300;
+            this.Height = 250;
 
             // Set background and border
             this.Background = Brushes.White;
@@ -28,7 +34,7 @@ namespace ECATPlugin
                 BorderBrush = Brushes.Gray,
                 BorderThickness = new Thickness(1),
                 Child = new Grid(),
-                Effect = new System.Windows.Media.Effects.DropShadowEffect
+                Effect = new DropShadowEffect
                 {
                     BlurRadius = 10,
                     ShadowDepth = 5,
@@ -53,63 +59,52 @@ namespace ECATPlugin
                 SelectionMode = DataGridSelectionMode.Single,
                 SelectionUnit = DataGridSelectionUnit.Cell,
                 CanUserSortColumns = false // Disable sorting
-
-
             };
 
-
-            // Add columns to the DataGrid with correct DataGridLengthUnitType
+            // Add columns to the DataGrid
             _valueDataGrid.Columns.Add(new DataGridTextColumn
             {
-                Header = "Concrete Type",
-                Binding = new System.Windows.Data.Binding("ConcreteType"),
+                Header = "Source",
+                Binding = new System.Windows.Data.Binding("Source"),
                 Width = new DataGridLength(1, DataGridLengthUnitType.Star),
-                CanUserSort = false // Disable sorting for this column
+                CanUserSort = false
             });
 
             _valueDataGrid.Columns.Add(new DataGridTextColumn
             {
-                Header = "0%",
-                Binding = new System.Windows.Data.Binding("ZeroPercent"),
+                Header = "Module A1-A3",
+                Binding = new System.Windows.Data.Binding("ModuleA1A3"),
                 Width = new DataGridLength(1, DataGridLengthUnitType.Star),
-                CanUserSort = false // Disable sorting for this column
+                CanUserSort = false
             });
 
             _valueDataGrid.Columns.Add(new DataGridTextColumn
             {
-                Header = "25%",
-                Binding = new System.Windows.Data.Binding("TwentyFivePercent"),
+                Header = "Module A4",
+                Binding = new System.Windows.Data.Binding("ModuleA4"),
                 Width = new DataGridLength(1, DataGridLengthUnitType.Star),
-                CanUserSort = false // Disable sorting for this column
+                CanUserSort = false
             });
 
             _valueDataGrid.Columns.Add(new DataGridTextColumn
             {
-                Header = "50%",
-                Binding = new System.Windows.Data.Binding("FiftyPercent"),
+                Header = "Module A5",
+                Binding = new System.Windows.Data.Binding("ModuleA5"),
                 Width = new DataGridLength(1, DataGridLengthUnitType.Star),
-                CanUserSort = false // Disable sorting for this column
+                CanUserSort = false
             });
 
-            _valueDataGrid.Columns.Add(new DataGridTextColumn
-            {
-                Header = "75%",
-                Binding = new System.Windows.Data.Binding("SeventyFivePercent"),
-                Width = new DataGridLength(1, DataGridLengthUnitType.Star),
-                CanUserSort = false // Disable sorting for this column
-            });
+            // Create style for the source column
+            Style sourceColumnStyle = new Style(typeof(DataGridCell));
+            sourceColumnStyle.Setters.Add(new Setter(DataGridCell.BackgroundProperty, Brushes.LightGray));
+            sourceColumnStyle.Setters.Add(new Setter(DataGridCell.ForegroundProperty, Brushes.Black));
+            sourceColumnStyle.Setters.Add(new Setter(DataGridCell.FontWeightProperty, FontWeights.Bold));
+            sourceColumnStyle.Setters.Add(new Setter(DataGridCell.BorderBrushProperty, Brushes.Gray));
+            sourceColumnStyle.Setters.Add(new Setter(DataGridCell.BorderThicknessProperty, new Thickness(1)));
+            sourceColumnStyle.Setters.Add(new Setter(DataGridCell.PaddingProperty, new Thickness(5)));
+            sourceColumnStyle.Setters.Add(new Setter(DataGridCell.CursorProperty, Cursors.Arrow)); // Regular cursor
 
-            // Create different styles for the concrete type column versus the value columns
-            Style concreteTypeColumnStyle = new Style(typeof(DataGridCell));
-            concreteTypeColumnStyle.Setters.Add(new Setter(DataGridCell.BackgroundProperty, Brushes.LightGray));
-            concreteTypeColumnStyle.Setters.Add(new Setter(DataGridCell.ForegroundProperty, Brushes.Black));
-            concreteTypeColumnStyle.Setters.Add(new Setter(DataGridCell.FontWeightProperty, FontWeights.Bold));
-            concreteTypeColumnStyle.Setters.Add(new Setter(DataGridCell.BorderBrushProperty, Brushes.Gray));
-            concreteTypeColumnStyle.Setters.Add(new Setter(DataGridCell.BorderThicknessProperty, new Thickness(1)));
-            concreteTypeColumnStyle.Setters.Add(new Setter(DataGridCell.PaddingProperty, new Thickness(5)));
-            concreteTypeColumnStyle.Setters.Add(new Setter(DataGridCell.CursorProperty, Cursors.Arrow)); // Regular arrow cursor instead of hand
-
-            // Style the cells to make it clear they are selectable
+            // Style for the value columns (modules)
             Style valueColumnStyle = new Style(typeof(DataGridCell));
             valueColumnStyle.Setters.Add(new Setter(DataGridCell.BackgroundProperty, Brushes.White));
             valueColumnStyle.Setters.Add(new Setter(DataGridCell.BorderBrushProperty, Brushes.LightGray));
@@ -117,35 +112,36 @@ namespace ECATPlugin
             valueColumnStyle.Setters.Add(new Setter(DataGridCell.PaddingProperty, new Thickness(5)));
             valueColumnStyle.Setters.Add(new Setter(DataGridCell.CursorProperty, Cursors.Hand)); // Hand cursor to indicate clickable
 
-            // Add hover effect for value columns only
+            // Add hover effect for value columns
             Trigger mouseOverTrigger = new Trigger { Property = DataGridCell.IsMouseOverProperty, Value = true };
             mouseOverTrigger.Setters.Add(new Setter(DataGridCell.BackgroundProperty, Brushes.LightBlue));
             valueColumnStyle.Triggers.Add(mouseOverTrigger);
 
-            // Apply column-specific styles
-            _valueDataGrid.Columns[0].CellStyle = concreteTypeColumnStyle; // Concrete Type column
-            _valueDataGrid.Columns[1].CellStyle = valueColumnStyle; // 0% column
-            _valueDataGrid.Columns[2].CellStyle = valueColumnStyle; // 25% column  
-            _valueDataGrid.Columns[3].CellStyle = valueColumnStyle; // 50% column
-            _valueDataGrid.Columns[4].CellStyle = valueColumnStyle; // 75% column
+            // Apply column styles
+            _valueDataGrid.Columns[0].CellStyle = sourceColumnStyle; // Source column
+            _valueDataGrid.Columns[1].CellStyle = valueColumnStyle;  // Module A1-A3
+            _valueDataGrid.Columns[2].CellStyle = valueColumnStyle;  // Module A4
+            _valueDataGrid.Columns[3].CellStyle = valueColumnStyle;  // Module A5
 
-
-            // Add event handler for DataGrid
+            // Add event handlers
             _valueDataGrid.MouseLeftButtonUp += ValueDataGrid_MouseLeftButtonUp;
             _valueDataGrid.PreviewKeyDown += ValueDataGrid_PreviewKeyDown;
 
-            // Create Grid to hold DataGrid and make it fill the space
+            // Create Grid to hold DataGrid
             var grid = (Grid)border.Child;
             grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
-            // Add DataGrid to the Grid and make it fill the space
+            // Add DataGrid to the Grid
             Grid.SetRow(_valueDataGrid, 0);
             grid.Children.Add(_valueDataGrid);
 
-            // Add title/header
+            // Get density for the selected timber type
+            int density = TimberECDataProvider.GetDensityForTimberType(_timberType);
+
+            // Add title with density
             TextBlock headerText = new TextBlock
             {
-                Text = "Concrete Embodied Carbon Values (kgCO2e/m³)",
+                Text = $"{_timberType} (Density = {density}kg/m³) Embodied Carbon Values (kgCO₂e/kg)",
                 FontWeight = FontWeights.Bold,
                 FontSize = 14,
                 HorizontalAlignment = HorizontalAlignment.Center,
@@ -165,11 +161,16 @@ namespace ECATPlugin
 
             // Set content
             this.Content = mainGrid;
+
+            // Load data based on timber type
+            LoadData();
         }
 
-        public void SetValues(IEnumerable<ConcreteData> values)
+        private void LoadData()
         {
-            _valueDataGrid.ItemsSource = values;
+            // Get data based on the timber type
+            List<TimberECData> data = TimberECDataProvider.GetDataForTimberType(_timberType);
+            _valueDataGrid.ItemsSource = data;
         }
 
         private void ValueDataGrid_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -184,7 +185,7 @@ namespace ECATPlugin
 
         private void ValueDataGrid_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            // Handle Enter key to select the current cell
+            // Handle Enter key
             if (e.Key == Key.Enter)
             {
                 var currentCell = _valueDataGrid.CurrentCell;
@@ -202,28 +203,25 @@ namespace ECATPlugin
 
             // Get the header name and item
             string headerName = cellInfo.Column.Header.ToString();
-            ConcreteData item = cellInfo.Item as ConcreteData;
+            TimberECData item = cellInfo.Item as TimberECData;
 
-            // Only allow selecting cells from percentage columns, not from the concrete type column
-            if (item != null && headerName != "Concrete Type")
+            // Only allow selecting cells from module columns, not from the source column
+            if (item != null && headerName != "Source")
             {
                 string value = "";
 
-                if (headerName == "0%")
-                    value = item.ZeroPercent;
-                else if (headerName == "25%")
-                    value = item.TwentyFivePercent;
-                else if (headerName == "50%")
-                    value = item.FiftyPercent;
-                else if (headerName == "75%")
-                    value = item.SeventyFivePercent;
+                if (headerName == "Module A1-A3")
+                    value = item.ModuleA1A3;
+                else if (headerName == "Module A4")
+                    value = item.ModuleA4;
+                else if (headerName == "Module A5")
+                    value = item.ModuleA5;
 
                 if (!string.IsNullOrEmpty(value))
                 {
                     ValueSelected?.Invoke(this, value);
                 }
             }
-            // If the concrete type column was clicked, don't do anything (don't trigger ValueSelected)
         }
 
         private DataGridCellInfo GetCellUnderMouse(Point mousePosition)
@@ -242,7 +240,7 @@ namespace ECATPlugin
             // If we found a cell
             if (element is DataGridCell cell)
             {
-                // Skip if this is the concrete type column (column index 0)
+                // Skip if this is the source column (column index 0)
                 if (cell.Column != null && cell.Column.DisplayIndex == 0)
                     return new DataGridCellInfo();
 
@@ -264,7 +262,7 @@ namespace ECATPlugin
                     var column = _valueDataGrid.Columns[i];
                     accumulatedWidth += column.ActualWidth;
 
-                    // Skip the concrete type column (column index 0)
+                    // Skip the source column (column index 0)
                     if (i == 0)
                         continue;
 
@@ -295,15 +293,4 @@ namespace ECATPlugin
                 return FindVisualParent<T>(parentObject);
         }
     }
-
-    public class ConcreteData
-    {
-        public string ConcreteType { get; set; }
-        public string ZeroPercent { get; set; }
-        public string TwentyFivePercent { get; set; }
-        public string FiftyPercent { get; set; }
-        public string SeventyFivePercent { get; set; }
-    }
-
-
 }

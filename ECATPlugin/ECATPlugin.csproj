@@ -53,6 +53,9 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MasonryECData.cs" />
+    <Compile Include="TimberECData.cs" />
+    <Compile Include="SteelECData.cs" />
     <Compile Include="ECATApp.cs" />
     <Compile Include="RevitHelper.cs" />
     <Compile Include="RelayCommand.cs" />
@@ -67,6 +70,15 @@
     <Compile Include="RatingPopup.xaml.cs">
       <DependentUpon>RatingPopup.xaml</DependentUpon>
     </Compile>
+    <Compile Include="SteelECPopupWindow.xaml.cs">
+      <DependentUpon>SteelECPopupWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="TimberECPopupWindow.xaml.cs">
+      <DependentUpon>TimberECPopupWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="MasonryECPopupWindow.xaml.cs">
+      <DependentUpon>MasonryECPopupWindow.xaml</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Page Include="MainWindow.xaml">
@@ -78,6 +90,18 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="RatingPopup.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SteelECPopupWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="TimberECPopupWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="MasonryECPopupWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

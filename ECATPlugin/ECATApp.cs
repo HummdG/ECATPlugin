@@ -19,7 +19,7 @@ namespace ECATPlugin
             try
             {
                 // Create a Ribbon Panel in the Revit UI
-                RibbonPanel ribbonPanel = application.CreateRibbonPanel("Walsh ECAT");
+                RibbonPanel ribbonPanel = application.CreateRibbonPanel("ECAT Tool");
 
                 // Get the path of this assembly
                 string thisAssemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
@@ -43,7 +43,7 @@ namespace ECATPlugin
                 // Replace with this (using a relative path is better)
                 string assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
                 string assemblyDirectory = System.IO.Path.GetDirectoryName(assemblyPath);
-                string logoPath = System.IO.Path.Combine(assemblyDirectory, "walsh_ecat_logo.png");
+                string logoPath = System.IO.Path.Combine(assemblyDirectory, "Walsh_ecat_logo4.png");
                 pushButton.LargeImage = new System.Windows.Media.Imaging.BitmapImage(new Uri(logoPath));
                 return Result.Succeeded;
             }

@@ -1,4 +1,4 @@
-﻿<Window x:Class="ECATPlugin.MainWindow"
+﻿ <Window x:Class="ECATPlugin.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:ECATPlugin"
@@ -36,7 +36,7 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        
+
 
         <!-- Header Section -->
         <Grid Grid.Row="0" Margin="0,0,0,10">
@@ -61,7 +61,7 @@
                         Padding="2"/>
                 </StackPanel>
             </StackPanel>
-            
+
 
             <!-- <Image Grid.Column="1" Source="walsh_logo.png" Height="40" Margin="10,0,0,0"/> -->
         </Grid>
@@ -127,6 +127,7 @@
                 </Grid>
             </TabItem>
 
+
             <!-- Steel Tab -->
             <TabItem Header="Steel">
                 <Grid>
@@ -143,42 +144,130 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <DataGrid Grid.Column="0" ItemsSource="{Binding SteelItemsView}" AutoGenerateColumns="False" CanUserSortColumns="False" IsReadOnly="False">
+                        <!-- Simplified DataGrid approach with custom styling -->
+                        <DataGrid Grid.Column="0" 
+                      ItemsSource="{Binding FlattenedSteelTable}" 
+                      AutoGenerateColumns="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="All"
+                      RowHeaderWidth="0"
+                      IsReadOnly="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserResizeRows="False"
+                      CanUserSortColumns="False"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      BorderThickness="1"
+                      BorderBrush="#AAAAAA"
+                      Background="White"
+                      RowHeight="25">
+
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Element" Binding="{Binding Key}" IsReadOnly="True" Width="100" CanUserSort="False"/>
-                                <DataGridTextColumn Header="Volume (m³)" Binding="{Binding Value.SteelVolume, StringFormat=N2}" Width="100" IsReadOnly="True" CanUserSort="False"/>
-                                <DataGridTemplateColumn Header="Type" Width="120">
+                                <!-- Element Column -->
+                                <DataGridTemplateColumn Header="Element" Width="*">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <ComboBox ItemsSource="{Binding DataContext.AvailableSteelTypes, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
-                                          SelectedItem="{Binding Value.SteelType, UpdateSourceTrigger=PropertyChanged}"
-                                          SelectionChanged="MaterialType_SelectionChanged"
-                                          Tag="Steel"/>
+                                            <TextBlock Text="{Binding Name}" 
+                                           Margin="{Binding IndentMargin}" 
+                                           FontWeight="{Binding FontWeight}"
+                                           VerticalAlignment="Center"/>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="Source" Width="120">
+
+                                <!-- Volume Column -->
+                                <DataGridTemplateColumn Header="Volume (m³)" Width="120">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <ComboBox ItemsSource="{Binding DataContext.AvailableSteelSources, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
-                                          SelectedItem="{Binding Value.SteelSource, UpdateSourceTrigger=PropertyChanged}"
-                                          SelectionChanged="MaterialSource_SelectionChanged"
-                                          Tag="Steel"/>
+                                            <Grid>
+                                                <!-- Non-editable TextBlock for parent rows -->
+                                                <TextBlock Text="{Binding Volume, StringFormat=N2}" 
+                                               HorizontalAlignment="Right"
+                                               VerticalAlignment="Center"
+                                               Visibility="{Binding VolumeVisibility}"/>
+
+                                                <!-- Editable TextBox for leaf nodes -->
+                                                <TextBox Text="{Binding Volume, StringFormat=N2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                             HorizontalAlignment="Right"
+                                             VerticalAlignment="Center"
+                                             Visibility="{Binding EditableVisibility}"
+                                             BorderThickness="0"
+                                             Background="Transparent"
+                                             PreviewTextInput="NumberOnly_PreviewTextInput"/>
+                                            </Grid>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="Module" Width="100">
+
+                                <!-- EC Column -->
+                                <DataGridTemplateColumn Header="EC (kgCO₂e/kg)" Width="140">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <ComboBox ItemsSource="{Binding DataContext.AvailableModules, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
-                                          SelectedItem="{Binding Value.Module, UpdateSourceTrigger=PropertyChanged}"
-                                          SelectionChanged="MaterialModule_SelectionChanged"
-                                          Tag="Steel"/>
+                                            <TextBox Text="{Binding CarbonFactor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, NotifyOnSourceUpdated=True, NotifyOnTargetUpdated=True}" 
+                                         Visibility="{Binding EditableVisibility}"
+                                         PreviewTextInput="NumberOnly_PreviewTextInput"
+                                         PreviewMouseDown="SteelECTextBox_PreviewMouseDown"
+                                         TextChanged="SteelCarbonFactor_TextChanged"
+                                         LostFocus="SteelCarbonFactor_LostFocus"
+                                         HorizontalAlignment="Stretch"
+                                         VerticalAlignment="Center"
+                                         Padding="2"
+                                         Margin="0"/>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="Carbon (kgCO₂e)" Binding="{Binding Value.SteelCarbon, StringFormat=N2}" IsReadOnly="True" Width="100" CanUserSort="False"/>
+
+                                <!-- Carbon Column -->
+                                <DataGridTemplateColumn Header="Carbon (kgCO₂e)" Width="120">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Carbon, StringFormat=N0}" 
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
+
+                            <!-- Row styling to make it look clean -->
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Background" Value="White"/>
+                                    <Style.Triggers>
+                                        <!-- Level 0 (Virgin Steel, Reused Steel) -->
+                                        <DataTrigger Binding="{Binding Level}" Value="0">
+                                            <Setter Property="Background" Value="#E6E6E6"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                        <!-- Level 1 (Beams, Columns, etc) -->
+                                        <DataTrigger Binding="{Binding Level}" Value="1">
+                                            <Setter Property="Background" Value="#F5F5F5"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+
+                            <!-- Cell styling to make borders clean -->
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                    <Setter Property="BorderBrush" Value="#DDDDDD"/>
+                                    <Setter Property="Padding" Value="4,0"/>
+                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="DataGridCell">
+                                                <Border BorderThickness="{TemplateBinding BorderThickness}" 
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            Background="{TemplateBinding Background}">
+                                                    <ContentPresenter VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </DataGrid.CellStyle>
                         </DataGrid>
 
                         <StackPanel Grid.Column="1" Margin="10,0,0,0" Width="220">
@@ -230,26 +319,21 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="Source" Width="120">
+                                <!-- Source column removed - now using popup for EC values -->
+
+                                <!-- Added EC Column for Timber -->
+                                <DataGridTemplateColumn Header="EC (kgCO₂e/kg)" Width="120">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <ComboBox ItemsSource="{Binding DataContext.AvailableTimberSources, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
-                                          SelectedItem="{Binding Value.TimberSource, UpdateSourceTrigger=PropertyChanged}"
-                                          SelectionChanged="MaterialSource_SelectionChanged"
-                                          Tag="Timber"/>
+                                            <TextBox Text="{Binding Value.TimberECFactor, UpdateSourceTrigger=PropertyChanged}" 
+                                                PreviewMouseDown="TimberECTextBox_PreviewMouseDown"
+                                                PreviewTextInput="NumberOnly_PreviewTextInput"
+                                                TextChanged="EmbodiedCarbonTextBox_TextChanged"/>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="Module" Width="100">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <ComboBox ItemsSource="{Binding DataContext.AvailableModules, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
-                                          SelectedItem="{Binding Value.Module, UpdateSourceTrigger=PropertyChanged}"
-                                          SelectionChanged="MaterialModule_SelectionChanged"
-                                          Tag="Timber"/>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
+
+
                                 <DataGridTextColumn Header="Carbon (kgCO₂e)" Binding="{Binding Value.TimberCarbon, StringFormat=N2}" IsReadOnly="True" Width="100" CanUserSort="False"/>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -271,6 +355,8 @@
             </TabItem>
 
             <!-- Masonry Tab -->
+            <!-- Replace the current Masonry tab in MainWindow.xaml with this updated version -->
+
             <TabItem Header="Masonry">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -286,32 +372,142 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <DataGrid Grid.Column="0" ItemsSource="{Binding MasonryItemsView}" AutoGenerateColumns="False" CanUserSortColumns="False" IsReadOnly="False">
+                        <!-- Updated DataGrid for hierarchical masonry display -->
+                        <DataGrid Grid.Column="0" 
+                      ItemsSource="{Binding FlattenedMasonryTable}" 
+                      AutoGenerateColumns="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="All"
+                      RowHeaderWidth="0"
+                      IsReadOnly="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserResizeRows="False"
+                      CanUserSortColumns="False"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow"
+                      BorderThickness="1"
+                      BorderBrush="#AAAAAA"
+                      Background="White"
+                      RowHeight="25">
+
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Element" Binding="{Binding Key}" IsReadOnly="True" Width="100" CanUserSort="False"/>
-                                <DataGridTextColumn Header="Volume (m³)" Binding="{Binding Value.MasonryVolume, StringFormat=N2}" Width="100" IsReadOnly="True" CanUserSort="False"/>
-                                <DataGridTemplateColumn Header="Type" Width="120">
+                                <!-- Element Column -->
+                                <DataGridTemplateColumn Header="Element" Width="*">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <ComboBox ItemsSource="{Binding DataContext.AvailableMasonryTypes, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
-                                          SelectedItem="{Binding Value.MasonryType, UpdateSourceTrigger=PropertyChanged}"
-                                          SelectionChanged="MaterialSource_SelectionChanged"
-                                          Tag="Masonry"/>
+                                            <TextBlock Text="{Binding Name}" 
+                                           Margin="{Binding IndentMargin}" 
+                                           FontWeight="{Binding FontWeight}"
+                                           VerticalAlignment="Center"/>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="Module" Width="100">
+
+                                <!-- Volume Column -->
+                                <DataGridTemplateColumn Header="Volume (m³)" Width="120">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <ComboBox ItemsSource="{Binding DataContext.AvailableModules, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"
-                                          SelectedItem="{Binding Value.Module, UpdateSourceTrigger=PropertyChanged}"
-                                          SelectionChanged="MaterialModule_SelectionChanged"
-                                          Tag="Masonry"/>
+                                            <Grid>
+                                                <!-- Non-editable TextBlock for parent rows -->
+                                                <TextBlock Text="{Binding Volume, StringFormat=N2}" 
+                                               HorizontalAlignment="Right"
+                                               VerticalAlignment="Center"
+                                               Visibility="{Binding VolumeVisibility}"/>
+
+                                                <!-- Editable TextBox for leaf nodes -->
+                                                <TextBox Text="{Binding Volume, StringFormat=N2, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                             HorizontalAlignment="Right"
+                                             VerticalAlignment="Center"
+                                             Visibility="{Binding EditableVisibility}"
+                                             BorderThickness="0"
+                                             Background="Transparent"
+                                             PreviewTextInput="NumberOnly_PreviewTextInput"/>
+                                            </Grid>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="Carbon (kgCO₂e)" Binding="{Binding Value.MasonryCarbon, StringFormat=N2}" IsReadOnly="True" Width="100" CanUserSort="False"/>
+
+                                <!-- Density Column -->
+                                <DataGridTemplateColumn Header="Density (kg/m³)" Width="120">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <!-- Show density for leaf nodes only -->
+                                            <TextBlock Text="{Binding Density, StringFormat=N0}" 
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Visibility="{Binding EditableVisibility}"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- EC Column -->
+                                <DataGridTemplateColumn Header="EC (kgCO₂e/kg)" Width="140">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding CarbonFactor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                         Visibility="{Binding EditableVisibility}"
+                                         PreviewTextInput="NumberOnly_PreviewTextInput"
+                                         PreviewMouseDown="MasonryECTextBox_PreviewMouseDown"
+                                         TextChanged="SteelCarbonFactor_TextChanged"
+                                         HorizontalAlignment="Stretch"
+                                         VerticalAlignment="Center"
+                                         Padding="2"
+                                         Margin="0"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Carbon Column -->
+                                <DataGridTemplateColumn Header="Carbon (kgCO₂e)" Width="120">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Carbon, StringFormat=N0}" 
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
+
+                            <!-- Row styling to make it look clean -->
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Background" Value="White"/>
+                                    <Style.Triggers>
+                                        <!-- Level 0 (Masonry) -->
+                                        <DataTrigger Binding="{Binding Level}" Value="0">
+                                            <Setter Property="Background" Value="#E6E6E6"/>
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                        </DataTrigger>
+                                        <!-- Level 1 (Walls) -->
+                                        <DataTrigger Binding="{Binding Level}" Value="1">
+                                            <Setter Property="Background" Value="#F5F5F5"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+
+                            <!-- Cell styling to make borders clean -->
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                    <Setter Property="BorderBrush" Value="#DDDDDD"/>
+                                    <Setter Property="Padding" Value="4,0"/>
+                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="DataGridCell">
+                                                <Border BorderThickness="{TemplateBinding BorderThickness}" 
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            Background="{TemplateBinding Background}">
+                                                    <ContentPresenter VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </DataGrid.CellStyle>
                         </DataGrid>
 
                         <StackPanel Grid.Column="1" Margin="10,0,0,0" Width="220">
@@ -320,6 +516,8 @@
                                     <TextBlock Text="Masonry embodied carbon values by type:" Style="{StaticResource InfoHeaderStyle}"/>
                                     <TextBlock Text="Blockwork: 0.093 kgCO₂e/kg, 2000 kg/m³" Style="{StaticResource InfoContentStyle}"/>
                                     <TextBlock Text="Brickwork: 0.213 kgCO₂e/kg, 1910 kg/m³" Style="{StaticResource InfoContentStyle}"/>
+                                    <TextBlock Text="Module A4: 0.032 kgCO₂e/kg" Style="{StaticResource InfoContentStyle}"/>
+                                    <TextBlock Text="Module A5: 0.250 kgCO₂e/kg" Style="{StaticResource InfoContentStyle}"/>
                                 </StackPanel>
                             </GroupBox>
                         </StackPanel>
@@ -384,7 +582,12 @@
             <!-- Action Buttons -->
             <StackPanel Grid.Column="2" Orientation="Vertical">
                 <Button Content="Capture Screenshot" Click="CaptureScreenButton_Click" Width="120" Margin="0,0,0,10"/>
-                <Button Content="Close" Width="120" IsCancel="True"/>
+                <Button Content="Close" Width="120" Click="CloseButton_Click" IsCancel="True" Margin="0,0,0,10"/>
+                <Button x:Name="RefreshButton" 
+                    Content="Refresh" 
+                    Click="RefreshButton_Click"
+                    Width="120"/>
+
             </StackPanel>
         </Grid>
     </Grid>
