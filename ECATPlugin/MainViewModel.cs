@@ -1015,7 +1015,7 @@ namespace ECATPlugin
             foreach (var element in structuralElements)
             {
                 // Check for Phasing parameter - only process elements in the "Proposed" phase
-                Parameter phasingParam = element.LookupParameter("Phasing");
+                Parameter phasingParam = element.LookupParameter("Phase Created");
                 if (phasingParam != null && phasingParam.HasValue)
                 {
                     string phasing = phasingParam.AsString();
@@ -1224,7 +1224,7 @@ namespace ECATPlugin
         private string GetElementType(Element element)
         {
             // First check if the element has a "Phasing" parameter and if it's set to "proposed"
-            Parameter phasingParam = element.LookupParameter("Phasing");
+            Parameter phasingParam = element.LookupParameter("Phase Created");
             if (phasingParam != null && phasingParam.HasValue)
             {
                 string phasing = phasingParam.AsString();
@@ -2361,7 +2361,7 @@ namespace ECATPlugin
                     try
                     {
                         // Check for Phasing parameter - only process elements in the "Proposed" phase
-                        Parameter phasingParam = element.LookupParameter("Phasing");
+                        Parameter phasingParam = element.LookupParameter("Phase Created");
                         if (phasingParam != null && phasingParam.HasValue)
                         {
                             string phasing = phasingParam.AsString();
@@ -2789,7 +2789,7 @@ namespace ECATPlugin
                 try
                 {
                     // Check for Phasing parameter - skip if not "Proposed"
-                    Parameter phasingParam = element.LookupParameter("Phasing");
+                    Parameter phasingParam = element.LookupParameter("Phase Created");
                     if (phasingParam != null && phasingParam.HasValue)
                     {
                         string phasing = phasingParam.AsString();

@@ -81,19 +81,13 @@ namespace ECATPlugin
 
             _valueDataGrid.Columns.Add(new DataGridTextColumn
             {
-                Header = "Module A4",
-                Binding = new System.Windows.Data.Binding("ModuleA4"),
+                Header = "Module A1-A5",
+                Binding = new System.Windows.Data.Binding("ModuleA1A5"),
                 Width = new DataGridLength(1, DataGridLengthUnitType.Star),
                 CanUserSort = false
             });
 
-            _valueDataGrid.Columns.Add(new DataGridTextColumn
-            {
-                Header = "Module A5",
-                Binding = new System.Windows.Data.Binding("ModuleA5"),
-                Width = new DataGridLength(1, DataGridLengthUnitType.Star),
-                CanUserSort = false
-            });
+            
 
             // Create style for the source column
             Style sourceColumnStyle = new Style(typeof(DataGridCell));
@@ -121,8 +115,8 @@ namespace ECATPlugin
             // Apply column styles
             _valueDataGrid.Columns[0].CellStyle = sourceColumnStyle; // Source column
             _valueDataGrid.Columns[1].CellStyle = valueColumnStyle;  // Module A1-A3
-            _valueDataGrid.Columns[2].CellStyle = valueColumnStyle;  // Module A4
-            _valueDataGrid.Columns[3].CellStyle = valueColumnStyle;  // Module A5
+            _valueDataGrid.Columns[2].CellStyle = valueColumnStyle;  // Module A1-A5
+
 
             // Add event handlers
             _valueDataGrid.MouseLeftButtonUp += ValueDataGrid_MouseLeftButtonUp;
@@ -210,10 +204,8 @@ namespace ECATPlugin
 
                 if (headerName == "Module A1-A3")
                     value = item.ModuleA1A3;
-                else if (headerName == "Module A4")
-                    value = item.ModuleA4;
-                else if (headerName == "Module A5")
-                    value = item.ModuleA5;
+                else if (headerName == "Module A1-A5")
+                    value = item.ModuleA1A5;
 
                 if (!string.IsNullOrEmpty(value))
                 {
